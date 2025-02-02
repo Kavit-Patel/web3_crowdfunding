@@ -2,8 +2,10 @@ import * as anchor from '@coral-xyz/anchor'
 import {Program} from '@coral-xyz/anchor'
 import {Keypair, PublicKey, SystemProgram} from '@solana/web3.js'
 import {Crowdfunding} from '../target/types/crowdfunding'
-import { ASSOCIATED_TOKEN_PROGRAM_ID, createMint, TOKEN_PROGRAM_ID } from '@solana/spl-token'
+import { ASSOCIATED_TOKEN_PROGRAM_ID, createMint, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import assert from 'assert'
+import { BN } from 'bn.js'
+import { Buffer } from 'buffer'
 
 describe('crowdfunding', () => {
   
@@ -15,14 +17,17 @@ describe('crowdfunding', () => {
 
   let campaignOwner=Keypair.generate()
   let mintOwner=Keypair.generate()
+  let donor =Keypair.generate()
+  let donorAta:PublicKey
   let title="Protect the Sea"
   let start_time = new anchor.BN(Date.now() / 1000);
   let deadline = new anchor.BN(Date.now() / 1000 + 86400);
+  let donateAmount = new anchor.BN(10000000000)
 
   let mint:PublicKey;
   let vault:PublicKey;
   let campaignPda:PublicKey;
-  let bump:number;
+  let donorPda:PublicKey;
 
   beforeAll(async()=>{
     await connection.confirmTransaction(
@@ -31,20 +36,34 @@ describe('crowdfunding', () => {
     await connection.confirmTransaction(
     await connection.requestAirdrop(mintOwner.publicKey, 1_000_000_000));
 
+    await connection.confirmTransaction(await connection.requestAirdrop(donor.publicKey,1_000_000_000));
 
-    [campaignPda,bump]=PublicKey.findProgramAddressSync([
+
+    [campaignPda]=PublicKey.findProgramAddressSync([
       Buffer.from("campaign"),
       campaignOwner.publicKey.toBuffer(),
       Buffer.from(title)
     ],
     program.programId
     );
-    mint = await createMint(connection,mintOwner,mintOwner.publicKey,null,9);
+    mint = await createMint(connection,payer.payer,payer.publicKey,null,9);
     vault = anchor.utils.token.associatedAddress({
       mint: mint,
       owner: campaignPda,
       });
 
+    donorAta=(await getOrCreateAssociatedTokenAccount(connection,donor,mint,donor.publicKey)).address;
+
+    await mintTo(connection,payer.payer,mint,donorAta,payer.publicKey,100000000000);
+
+      
+    [donorPda]=PublicKey.findProgramAddressSync([
+        Buffer.from('donor'),
+        donor.publicKey.toBuffer(),
+        campaignPda.toBuffer()
+      ],
+      program.programId
+    );
   })
   it('Create Campaign', async () => {
 
@@ -63,16 +82,32 @@ describe('crowdfunding', () => {
       } as any)
       .rpc()
 
-      console.log("campaing PDA ",campaignPda.toString())
       const campaignAccount = await program.account.campaignState.fetch(campaignPda)
-      console.log("campaing title ",campaignAccount.title.toString())
-      console.log("campaing start ",campaignAccount.startTime)
-      console.log("campaing deadline ",campaignAccount.deadline)
-      console.log("campaing mint ",campaignAccount.mint.toBase58())
-      console.log("campaing owner ",campaignAccount.owner.toBase58())
-      console.log("campaing vault ",campaignAccount.vault.toBase58())
       assert.strictEqual(campaignAccount.title, title);
       assert.strictEqual(campaignAccount.owner.toString(), campaignOwner.publicKey.toString());
+  })
+  it('Donate to campaign',async()=>{
+        const tx = await program.methods.donateToCampaign(new BN(donateAmount))
+                              .accounts({
+                                donorAcc:donorPda,
+                                signer:donor.publicKey,
+                                campaign:campaignPda,
+                                vault,
+                                donorAta,
+                                tokenProgram:TOKEN_PROGRAM_ID,
+                                systemProgram:SystemProgram.programId,
+                                associatedTokenProgram:ASSOCIATED_TOKEN_PROGRAM_ID
+                              } as any)
+                              .signers([donor])
+                              .rpc()
+      // console.log("donor Tx ",tx)
+      const campaign = await program.account.campaignState.fetch(campaignPda)
+      const donor_state = await program.account.donorState.fetch(donorPda)
+      const vaultBalance = await connection.getTokenAccountBalance(campaign.vault)
+      assert.ok(Number(vaultBalance.value.amount)>0);
+      assert.equal(donor.publicKey.toString(),donor_state.donorPubkey.toString())
+      assert.ok(Number(donor_state.amount)>=Number(donateAmount))
+      
   })
 
 })
