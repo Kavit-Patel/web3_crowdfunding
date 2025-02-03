@@ -431,6 +431,229 @@ export type Crowdfunding = {
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "withdraw",
+      "discriminator": [
+        183,
+        18,
+        70,
+        156,
+        148,
+        109,
+        161,
+        34
+      ],
+      "accounts": [
+        {
+          "name": "campaign",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "campaign"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "campaign.mint",
+                "account": "campaignState"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "campaign"
+          ]
+        },
+        {
+          "name": "campaignOwnerAta",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "tokenProgram"
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "associatedTokenProgram",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -459,6 +682,53 @@ export type Crowdfunding = {
         20,
         191
       ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "campaignHasntStarted",
+      "msg": "Campaign hasn't been started yet !"
+    },
+    {
+      "code": 6001,
+      "name": "campaignHasbeenOver",
+      "msg": "Campaign is over now !"
+    },
+    {
+      "code": 6002,
+      "name": "ownerMissmatch",
+      "msg": "Current Signer is not campaign owner !"
+    },
+    {
+      "code": 6003,
+      "name": "noAmountInVault",
+      "msg": "Vault has no amount"
+    },
+    {
+      "code": 6004,
+      "name": "invalidTimeLine",
+      "msg": "Invalid timeline configuration in create campaign, start time is lower than deadline !"
+    },
+    {
+      "code": 6005,
+      "name": "titleTooLong",
+      "msg": "Title exceeds 50 character length !"
+    },
+    {
+      "code": 6006,
+      "name": "titleTooShort",
+      "msg": "Title is too short !"
+    },
+    {
+      "code": 6007,
+      "name": "invalidDonationAmount",
+      "msg": "Minimum Donation amount not matched ! "
+    },
+    {
+      "code": 6008,
+      "name": "deadlineNotReached",
+      "msg": "Deadline hasn't reached yet !"
     }
   ],
   "types": [

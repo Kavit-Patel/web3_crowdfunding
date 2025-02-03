@@ -28,6 +28,7 @@ describe('crowdfunding', () => {
   let vault:PublicKey;
   let campaignPda:PublicKey;
   let donorPda:PublicKey;
+  let campaignOwnerAta:PublicKey;
 
   beforeAll(async()=>{
     await connection.confirmTransaction(
@@ -64,6 +65,7 @@ describe('crowdfunding', () => {
       ],
       program.programId
     );
+    campaignOwnerAta = (await getOrCreateAssociatedTokenAccount(connection,campaignOwner,mint,campaignOwner.publicKey)).address
   })
   it('Create Campaign', async () => {
 
@@ -104,10 +106,30 @@ describe('crowdfunding', () => {
       const campaign = await program.account.campaignState.fetch(campaignPda)
       const donor_state = await program.account.donorState.fetch(donorPda)
       const vaultBalance = await connection.getTokenAccountBalance(campaign.vault)
+    console.log("amount raised ",Number(campaign.amountRaised))
+
       assert.ok(Number(vaultBalance.value.amount)>0);
       assert.equal(donor.publicKey.toString(),donor_state.donorPubkey.toString())
       assert.ok(Number(donor_state.amount)>=Number(donateAmount))
       
+  })
+  it("Campaign Owner Withdraw donation ",async()=>{
+    console.log("campaign owner ata ",campaignOwnerAta)
+    const withdrawTx = await program.methods.withdraw()
+                  .accounts({
+                    campaign:campaignPda,
+                    vault,
+                    owner:campaignOwner.publicKey,
+                    campaignOwnerAta,
+                    mint,
+                    tokenProgram:TOKEN_PROGRAM_ID,
+                    systemProgram:SystemProgram.programId,
+                    associatedTokenProgram:ASSOCIATED_TOKEN_PROGRAM_ID
+                  } as any)
+                  .signers([campaignOwner])
+                  .rpc()
+    const campaign = await program.account.campaignState.fetch(campaignPda)
+    assert.ok(Number(campaign.amountRaised)==0," Amount raised doesn't updated ")
   })
 
 })
