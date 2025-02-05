@@ -15,6 +15,8 @@ import {
   useRequestAirdrop,
   useTransferSol,
 } from './account-data-access'
+import PerfectScrollbar from "react-perfect-scrollbar";
+import "react-perfect-scrollbar/dist/css/styles.css";
 
 export function AccountBalance({ address }: { address: PublicKey }) {
   const query = useGetBalance({ address })
@@ -134,6 +136,8 @@ export function AccountTokens({ address }: { address: PublicKey }) {
           {query.data.length === 0 ? (
             <div>No token accounts found.</div>
           ) : (
+            <div className="h-[140px]">
+              <PerfectScrollbar>
             <table className="table border-4 rounded-lg border-separate border-base-300">
               <thead>
                 <tr>
@@ -179,6 +183,8 @@ export function AccountTokens({ address }: { address: PublicKey }) {
                 )}
               </tbody>
             </table>
+            </PerfectScrollbar>
+            </div>
           )}
         </div>
       )}
@@ -215,6 +221,8 @@ export function AccountTransactions({ address }: { address: PublicKey }) {
           {query.data.length === 0 ? (
             <div>No transactions found.</div>
           ) : (
+            <div className="h-[140px]">
+              <PerfectScrollbar>
             <table className="table border-4 rounded-lg border-separate border-base-300">
               <thead>
                 <tr>
@@ -256,6 +264,8 @@ export function AccountTransactions({ address }: { address: PublicKey }) {
                 )}
               </tbody>
             </table>
+            </PerfectScrollbar>
+            </div>
           )}
         </div>
       )}
@@ -294,7 +304,7 @@ function ModalAirdrop({ hide, show, address }: { hide: () => void; show: boolean
         type="number"
         step="any"
         min="1"
-        crowdfunding="Amount"
+        // crowdfunding="Amount"
         className="input input-bordered w-full"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
@@ -332,7 +342,7 @@ function ModalSend({ hide, show, address }: { hide: () => void; show: boolean; a
       <input
         disabled={mutation.isPending}
         type="text"
-        crowdfunding="Destination"
+        // crowdfunding="Destination"
         className="input input-bordered w-full"
         value={destination}
         onChange={(e) => setDestination(e.target.value)}
@@ -342,7 +352,7 @@ function ModalSend({ hide, show, address }: { hide: () => void; show: boolean; a
         type="number"
         step="any"
         min="1"
-        crowdfunding="Amount"
+        // crowdfunding="Amount"
         className="input input-bordered w-full"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}

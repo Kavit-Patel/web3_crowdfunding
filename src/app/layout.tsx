@@ -12,7 +12,9 @@ export const metadata = {
 const links: { label: string; path: string }[] = [
   { label: 'Account', path: '/account' },
   { label: 'Clusters', path: '/clusters' },
-  { label: 'Crowdfunding Program', path: '/crowdfunding' },
+  { label: 'MintToken', path: '/mint' },
+  { label: 'Crowdfunding-Program', path: '/crowdfunding' },
+  { label: 'Donate', path: '/donate' },
 ]
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

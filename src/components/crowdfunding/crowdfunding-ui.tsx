@@ -1,122 +1,82 @@
 'use client'
 
-import { Keypair, PublicKey } from '@solana/web3.js'
-import { useMemo } from 'react'
-import { ellipsify } from '../ui/ui-layout'
-import { ExplorerLink } from '../cluster/cluster-ui'
-import { useCrowdfundingProgram, useCrowdfundingProgramAccount } from './crowdfunding-data-access'
+import {  useCrowdfundingProgram } from './crowdfunding-data-access'
+import { WalletContextState } from '@solana/wallet-adapter-react'
+import { ICampaign } from './types'
+import { formatDate } from '../common/common-utils'
+import { useCreateMintAndTokenAccount } from '../mint/mint-data-access'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 
-export function CrowdfundingCreate() {
-  const { initialize } = useCrowdfundingProgram()
 
+export function CrowdfundingCreate({wallet}:{wallet:WalletContextState}) {
+  const { createCampaign } = useCrowdfundingProgram()
+  const {createMintAndTokenAccount}=useCreateMintAndTokenAccount()
+  const router = useRouter()
+  const handleCreateCampaign = async()=>{
+    const {signature,mint,associatedTokenAccount} = await createMintAndTokenAccount.mutateAsync({walletAdapter:wallet,tokenAmount:1000})
+    await createCampaign.mutateAsync({wallet,startTime:1738589584,deadline:1739589584,mint })
+    .then(()=>router.push('/donate'))
+    .catch(()=>toast.error("Campaign Creation failed !"))
+  }
   return (
     <button
       className="btn btn-xs lg:btn-md btn-primary"
-      onClick={() => initialize.mutateAsync(Keypair.generate())}
-      disabled={initialize.isPending}
+      onClick={handleCreateCampaign}
+      disabled={createCampaign.isPending}
     >
-      Create {initialize.isPending && '...'}
+      Create {createCampaign.isPending && '...'}
     </button>
   )
 }
 
-export function CrowdfundingList() {
-  const { accounts, getProgramAccount } = useCrowdfundingProgram()
+export function CrowdfundingCard({existingCampaign}:{existingCampaign:ICampaign}) {
 
-  if (getProgramAccount.isLoading) {
-    return <span className="loading loading-spinner loading-lg"></span>
-  }
-  if (!getProgramAccount.data?.value) {
-    return (
-      <div className="alert alert-info flex justify-center">
-        <span>Program account not found. Make sure you have deployed the program and are on the correct cluster.</span>
+  const startTime =formatDate( new Date(existingCampaign.startTime.toNumber() * 1000));
+  const deadline = formatDate(new Date(existingCampaign.deadline.toNumber() * 1000));
+
+
+  return  existingCampaign ? (
+          <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 max-w-md mx-auto mt-20">
+      <h2 className="text-2xl font-bold mb-2 text-gray-800 dark:text-gray-200 text-center">
+        {existingCampaign.title}
+      </h2>
+      
+      <div className="mb-4">
+        <p className="text-gray-600 dark:text-gray-400 text-sm mb-1.5">
+          <span className="font-semibold">Owner:</span> {existingCampaign.owner.toBase58()}
+        </p>
+        <p className="text-gray-600 dark:text-gray-400 text-sm mb-1.5">
+          <span className="font-semibold">Mint:</span> {existingCampaign.mint.toBase58()}
+        </p>
+        <p className="text-gray-600 dark:text-gray-400 text-sm mb-1.5">
+          <span className="font-semibold">Vault:</span> {existingCampaign.vault.toBase58()}
+        </p>
       </div>
-    )
-  }
-  return (
-    <div className={'space-y-6'}>
-      {accounts.isLoading ? (
-        <span className="loading loading-spinner loading-lg"></span>
-      ) : accounts.data?.length ? (
-        <div className="grid md:grid-cols-2 gap-4">
-          {accounts.data?.map((account) => (
-            <CrowdfundingCard key={account.publicKey.toString()} account={account.publicKey} />
-          ))}
+
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+        <div>
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-300">Start Date</p>
+          <p className="text-base font-semibold text-gray-700 dark:text-gray-100">{startTime}</p>
         </div>
-      ) : (
-        <div className="text-center">
-          <h2 className={'text-2xl'}>No accounts</h2>
-          No accounts found. Create one above to get started.
-        </div>
-      )}
-    </div>
-  )
-}
-
-function CrowdfundingCard({ account }: { account: PublicKey }) {
-  const { accountQuery, incrementMutation, setMutation, decrementMutation, closeMutation } = useCrowdfundingProgramAccount({
-    account,
-  })
-
-  const count = useMemo(() => accountQuery.data?.count ?? 0, [accountQuery.data?.count])
-
-  return accountQuery.isLoading ? (
-    <span className="loading loading-spinner loading-lg"></span>
-  ) : (
-    <div className="card card-bordered border-base-300 border-4 text-neutral-content">
-      <div className="card-body items-center text-center">
-        <div className="space-y-6">
-          <h2 className="card-title justify-center text-3xl cursor-pointer" onClick={() => accountQuery.refetch()}>
-            {count}
-          </h2>
-          <div className="card-actions justify-around">
-            <button
-              className="btn btn-xs lg:btn-md btn-outline"
-              onClick={() => incrementMutation.mutateAsync()}
-              disabled={incrementMutation.isPending}
-            >
-              Increment
-            </button>
-            <button
-              className="btn btn-xs lg:btn-md btn-outline"
-              onClick={() => {
-                const value = window.prompt('Set value to:', count.toString() ?? '0')
-                if (!value || parseInt(value) === count || isNaN(parseInt(value))) {
-                  return
-                }
-                return setMutation.mutateAsync(parseInt(value))
-              }}
-              disabled={setMutation.isPending}
-            >
-              Set
-            </button>
-            <button
-              className="btn btn-xs lg:btn-md btn-outline"
-              onClick={() => decrementMutation.mutateAsync()}
-              disabled={decrementMutation.isPending}
-            >
-              Decrement
-            </button>
-          </div>
-          <div className="text-center space-y-4">
-            <p>
-              <ExplorerLink path={`account/${account}`} label={ellipsify(account.toString())} />
-            </p>
-            <button
-              className="btn btn-xs btn-secondary btn-outline"
-              onClick={() => {
-                if (!window.confirm('Are you sure you want to close this account?')) {
-                  return
-                }
-                return closeMutation.mutateAsync()
-              }}
-              disabled={closeMutation.isPending}
-            >
-              Close
-            </button>
-          </div>
+        <div className="mt-4 sm:mt-0">
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-300">End Date</p>
+          <p className="text-base font-semibold text-gray-700 dark:text-gray-100">{deadline}</p>
         </div>
       </div>
+
+      <div className="mb-4">
+        <p className="text-sm font-medium text-gray-500 dark:text-gray-300">Amount Raised</p>
+        <p className="text-xl font-bold text-green-600">
+          {(Number(existingCampaign.amountRaised)/10**9).toFixed(2)}
+        </p>
+      </div>
+      <div className="mb-4 text-center">
+        <Link href="/donate"  className="text-lg px-4 py-1 rounded-md bg-green-800 transition-all hover:bg-green-900 active:scale-95 font-medium text-gray-500 dark:text-gray-300">Donate Now</Link>
+      </div>
     </div>
+  ):(
+    <div>Campaign hasn't Created yet !</div>
   )
 }

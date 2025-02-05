@@ -21,7 +21,7 @@ export function getCrowdfundingProgramId(cluster: Cluster) {
     case 'devnet':
     case 'testnet':
       // This is the program ID for the Crowdfunding program on devnet and testnet.
-      return new PublicKey('coUnmi3oBUtwtd9fjeAvSsJssXh5A5xyPbhpewyzRVF')
+      return new PublicKey('FnBWfHQmw6o7igCF1NbScApEtJNesmqAPThKWT5RmbnS')
     case 'mainnet-beta':
     default:
       return CROWDFUNDING_PROGRAM_ID

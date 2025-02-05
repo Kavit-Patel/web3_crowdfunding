@@ -1,14 +1,17 @@
 'use client'
 
 import { getCrowdfundingProgram, getCrowdfundingProgramId } from '@project/anchor'
-import { useConnection } from '@solana/wallet-adapter-react'
-import { Cluster, Keypair, PublicKey } from '@solana/web3.js'
+import { useConnection, useWallet } from '@solana/wallet-adapter-react'
+import { Cluster,  PublicKey, SystemProgram } from '@solana/web3.js'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import toast from 'react-hot-toast'
 import { useCluster } from '../cluster/cluster-data-access'
 import { useAnchorProvider } from '../solana/solana-provider'
 import { useTransactionToast } from '../ui/ui-layout'
+import { BN } from 'bn.js'
+import { ICampaign, ICreateCampaign } from './types'
+import { ASSOCIATED_TOKEN_PROGRAM_ID,  getAssociatedTokenAddress,  TOKEN_PROGRAM_ID } from '@solana/spl-token'
 
 export function useCrowdfundingProgram() {
   const { connection } = useConnection()
@@ -18,87 +21,90 @@ export function useCrowdfundingProgram() {
   const programId = useMemo(() => getCrowdfundingProgramId(cluster.network as Cluster), [cluster])
   const program = useMemo(() => getCrowdfundingProgram(provider, programId), [provider, programId])
 
-  const accounts = useQuery({
-    queryKey: ['crowdfunding', 'all', { cluster }],
-    queryFn: () => program.account.crowdfunding.all(),
-  })
 
-  const getProgramAccount = useQuery({
-    queryKey: ['get-program-account', { cluster }],
-    queryFn: () => connection.getParsedAccountInfo(programId),
-  })
 
-  const initialize = useMutation({
-    mutationKey: ['crowdfunding', 'initialize', { cluster }],
-    mutationFn: (keypair: Keypair) =>
-      program.methods.initialize().accounts({ crowdfunding: keypair.publicKey }).signers([keypair]).rpc(),
-    onSuccess: (signature) => {
-      transactionToast(signature)
-      return accounts.refetch()
+  const createCampaign = useMutation<ICampaign, Error, ICreateCampaign>({
+    mutationKey: ['campaign', 'create', { cluster }],
+    mutationFn: async({wallet,startTime,deadline,mint}) =>{
+      const [campaignPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("campaign"),
+          wallet.publicKey!.toBuffer(),
+          Buffer.from("Protect the Sea")
+        ],
+        program.programId
+      );
+        const vault= await getAssociatedTokenAddress(mint,campaignPda,true)
+          const tx = await program.methods.createCampaign("Protect the Sea",new BN(startTime),new BN(deadline))
+                      .accounts({
+                        campaign:campaignPda,
+                        signer:wallet.publicKey!,
+                        owner:wallet.publicKey!,
+                        mint,
+                        vault,
+                        systemProgram: SystemProgram.programId,
+                        tokenProgram: TOKEN_PROGRAM_ID,
+                        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+                      } as any)
+                      .rpc();
+            const latestBlockHash = await connection.getLatestBlockhash();
+            await connection.confirmTransaction({
+              signature: tx,
+              blockhash: latestBlockHash.blockhash,
+              lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+            });
+            const createdCampaign = await program.account.campaignState.fetch(campaignPda)
+            return createdCampaign
+      
+        },
+    onSuccess: (data) => {
+      transactionToast(data.title)
+      return data;
     },
-    onError: () => toast.error('Failed to initialize account'),
-  })
+    onError: () => {
+      toast.error('Failed to create campaign')
+      return "Failed to fetch/create Campaign"
+    },
+})
 
   return {
     program,
     programId,
-    accounts,
-    getProgramAccount,
-    initialize,
+    createCampaign
   }
 }
 
-export function useCrowdfundingProgramAccount({ account }: { account: PublicKey }) {
-  const { cluster } = useCluster()
-  const transactionToast = useTransactionToast()
-  const { program, accounts } = useCrowdfundingProgram()
+export function useExistingAccount() {
+  const { cluster } = useCluster();
+  const { publicKey } = useWallet();
+  const transactionToast = useTransactionToast();
+  const { program } = useCrowdfundingProgram();
 
-  const accountQuery = useQuery({
-    queryKey: ['crowdfunding', 'fetch', { cluster, account }],
-    queryFn: () => program.account.crowdfunding.fetch(account),
-  })
+  const toastShownRef = useRef(false);
 
-  const closeMutation = useMutation({
-    mutationKey: ['crowdfunding', 'close', { cluster, account }],
-    mutationFn: () => program.methods.close().accounts({ crowdfunding: account }).rpc(),
-    onSuccess: (tx) => {
-      transactionToast(tx)
-      return accounts.refetch()
+  useEffect(() => {
+    if (!publicKey && !toastShownRef.current) {
+      toast("Wallet not connected!");
+      toastShownRef.current = true; 
+    }
+  }, [publicKey]);
+
+  const campaignPda = useMemo(() => {
+    if (!publicKey) return null;
+    return PublicKey.findProgramAddressSync(
+      [Buffer.from("campaign"), new PublicKey("4KLkUmYAEiL7gLjsyjB1dye9BvzKJk2cFebwyZJFfvFU").toBuffer(), Buffer.from("Protect the Sea")],
+      program.programId
+    )[0];
+  }, [publicKey, program.programId]);
+
+  const campaignAccountQuery = useQuery({
+    queryKey: ["crowdfunding", "fetch", { cluster, campaignPda }],
+    queryFn: async () => {
+      if (!campaignPda) throw new Error("No campaign PDA");
+      return await program.account.campaignState.fetch(campaignPda);
     },
-  })
+    enabled: !!campaignPda, 
+  });
 
-  const decrementMutation = useMutation({
-    mutationKey: ['crowdfunding', 'decrement', { cluster, account }],
-    mutationFn: () => program.methods.decrement().accounts({ crowdfunding: account }).rpc(),
-    onSuccess: (tx) => {
-      transactionToast(tx)
-      return accountQuery.refetch()
-    },
-  })
-
-  const incrementMutation = useMutation({
-    mutationKey: ['crowdfunding', 'increment', { cluster, account }],
-    mutationFn: () => program.methods.increment().accounts({ crowdfunding: account }).rpc(),
-    onSuccess: (tx) => {
-      transactionToast(tx)
-      return accountQuery.refetch()
-    },
-  })
-
-  const setMutation = useMutation({
-    mutationKey: ['crowdfunding', 'set', { cluster, account }],
-    mutationFn: (value: number) => program.methods.set(value).accounts({ crowdfunding: account }).rpc(),
-    onSuccess: (tx) => {
-      transactionToast(tx)
-      return accountQuery.refetch()
-    },
-  })
-
-  return {
-    accountQuery,
-    closeMutation,
-    decrementMutation,
-    incrementMutation,
-    setMutation,
-  }
+  return { campaignAccountQuery };
 }

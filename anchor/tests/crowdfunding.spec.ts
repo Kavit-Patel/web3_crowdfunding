@@ -57,7 +57,7 @@ describe('crowdfunding', () => {
 
     await mintTo(connection,payer.payer,mint,donorAta,payer.publicKey,100000000000);
 
-      
+      console.log("vault ",vault.toBase58());
     [donorPda]=PublicKey.findProgramAddressSync([
         Buffer.from('donor'),
         donor.publicKey.toBuffer(),

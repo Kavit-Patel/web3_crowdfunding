@@ -2,29 +2,28 @@
 
 import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletButton } from '../solana/solana-provider'
-import { AppHero, ellipsify } from '../ui/ui-layout'
-import { ExplorerLink } from '../cluster/cluster-ui'
-import { useCrowdfundingProgram } from './crowdfunding-data-access'
-import { CrowdfundingCreate, CrowdfundingList } from './crowdfunding-ui'
+import { AppHero } from '../ui/ui-layout'
+import {  useExistingAccount } from './crowdfunding-data-access'
+import { CrowdfundingCard, CrowdfundingCreate } from './crowdfunding-ui'
 
 export default function CrowdfundingFeature() {
-  const { publicKey } = useWallet()
-  const { programId } = useCrowdfundingProgram()
+  const {campaignAccountQuery}=useExistingAccount()
+  const wallet = useWallet()
 
-  return publicKey ? (
+  return wallet && wallet.connected  && wallet.publicKey ? (
     <div>
+      {!campaignAccountQuery.isPending && !campaignAccountQuery.data &&
       <AppHero
         title="Crowdfunding"
         subtitle={
-          'Create a new account by clicking the "Create" button. The state of a account is stored on-chain and can be manipulated by calling the program\'s methods (increment, decrement, set, and close).'
+          'Create Crowd funding'
         }
       >
-        <p className="mb-6">
-          <ExplorerLink path={`account/${programId}`} label={ellipsify(programId.toString())} />
-        </p>
-        <CrowdfundingCreate />
-      </AppHero>
-      <CrowdfundingList />
+
+         <CrowdfundingCreate wallet = {wallet} />
+      </AppHero>}
+      {campaignAccountQuery.isPending && <div className='w-screen h-screen flex justify-center items-center '><div className="loading loading-spinner loading-lg "></div></div>}
+     {campaignAccountQuery.data &&  <CrowdfundingCard existingCampaign = {campaignAccountQuery.data}/>}
     </div>
   ) : (
     <div className="max-w-4xl mx-auto">
