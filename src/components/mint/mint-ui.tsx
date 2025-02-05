@@ -87,16 +87,20 @@ export function MintList({wallet,mint}:{wallet:WalletContextState,mint:PublicKey
   const query=useGetTokenAccounts({address:wallet.publicKey!});
   const {connection} = useConnection()
   const queryClient = useQueryClient()
+  const [requestPending,setRequestPending] =useState<boolean>(false)
   const {tokenAccounts,campaignToken} = useMemo(()=>{
    return {tokenAccounts:query.data,campaignToken:query.data?.find(acc=>acc.account.data.parsed.info.mint==mint)}
-  },[wallet.publicKey,query.data])
+  },[wallet.publicKey,query.data,mint])
   const availableTokenAmount = useMemo(()=>campaignToken?.account.data.parsed.info.tokenAmount.uiAmount ,[campaignToken])
   const handleAirdrop = async()=>{
-    await useRequestCampaignMintAirdrop.mutateAsync({walletAdapter:wallet,mint,tokenAmount:(5*10**9)}).then(()=>{
+    setRequestPending(true);
+    await useRequestCampaignMintAirdrop.mutateAsync({walletAdapter:wallet,mint,tokenAmount:(5*10**9)})
+    .then(()=>{
       queryClient.invalidateQueries({
         queryKey: ['get-token-accounts', { endpoint: connection.rpcEndpoint, address: wallet.publicKey }],
       });
     })
+    .finally(()=>setRequestPending(false))
   }
 
   return(
@@ -120,7 +124,15 @@ export function MintList({wallet,mint}:{wallet:WalletContextState,mint:PublicKey
             </thead>
 
             <tbody>
-              {tokenAccounts.map(({ account, pubkey }) => (
+              {
+              tokenAccounts
+              .sort((a,b)=>
+                a.account.data.parsed.info.mint==mint
+                ?-1
+                :b.account.data.parsed.info.mint==mint
+                ?1
+                :0)
+              .map(({ account, pubkey }) => (
                 <tr
                   key={pubkey.toString()}
                   className="border-b last:border-none hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-600"
@@ -138,10 +150,28 @@ export function MintList({wallet,mint}:{wallet:WalletContextState,mint:PublicKey
                     />
                   </td>
                   <td className="px-6 py-4 text-right text-gray-800 dark:text-gray-200 flex justify-between items-center gap-4">
-                    {campaignToken && availableTokenAmount== 0 
-                    ? <Link href="/donate" className='px-2 py-1.5 bg-green-800 rounded-lg text-xs transition-all hover:bg-green-950'>Donate</Link>
-                    : <button onClick={handleAirdrop} className='px-2 py-1.5 bg-green-800 rounded-lg text-xs transition-all hover:bg-green-950'>Request Airdrop</button>}
-                    <span>{availableTokenAmount.toFixed(2)}</span>
+                    <span 
+                        className='w-14 truncate text-xs md:text-sm text-left'
+                        title={account.data.parsed.info.mint === mint 
+                          ? availableTokenAmount?.toFixed(2) 
+                          : account.data.parsed.info.tokenAmount.uiAmount}
+                    >
+                      {account.data.parsed.info.mint==mint ?availableTokenAmount?.toFixed(2):account.data.parsed.info.tokenAmount.uiAmount}
+                      </span>
+                    {
+                      account.data.parsed.info.mint==mint 
+                      &&
+                      <>
+                      {
+                        campaignToken  && availableTokenAmount== 0 
+                        ? <button disabled={useRequestCampaignMintAirdrop.isPending} onClick={handleAirdrop} className='w-24 py-1.5 bg-green-800 rounded-lg text-xs transition-all hover:bg-green-950'>
+                            {requestPending?"Requesting...":"Request Airdrop"}
+                          </button>
+                        : <Link href="/donate" className='px-2 py-1.5 bg-green-800 rounded-lg text-xs transition-all hover:bg-green-950'>Donate</Link>
+                          
+                      }
+                      </>
+                    }
                   </td>
                 </tr>
               ))}

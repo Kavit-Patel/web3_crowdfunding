@@ -30,12 +30,12 @@ export function useCrowdfundingProgram() {
         [
           Buffer.from("campaign"),
           wallet.publicKey!.toBuffer(),
-          Buffer.from("Protect the Sea")
+          Buffer.from("Plant a Billion trees")
         ],
         program.programId
       );
         const vault= await getAssociatedTokenAddress(mint,campaignPda,true)
-          const tx = await program.methods.createCampaign("Protect the Sea",new BN(startTime),new BN(deadline))
+          const tx = await program.methods.createCampaign("Plant a Billion trees",new BN(startTime),new BN(deadline))
                       .accounts({
                         campaign:campaignPda,
                         signer:wallet.publicKey!,
@@ -79,6 +79,7 @@ export function useExistingAccount() {
   const { publicKey } = useWallet();
   const transactionToast = useTransactionToast();
   const { program } = useCrowdfundingProgram();
+  const campaignCreator = process.env.NEXT_PUBLIC_CAMPAIGN_CREATOR_WALLET_KEY;
 
   const toastShownRef = useRef(false);
 
@@ -92,7 +93,7 @@ export function useExistingAccount() {
   const campaignPda = useMemo(() => {
     if (!publicKey) return null;
     return PublicKey.findProgramAddressSync(
-      [Buffer.from("campaign"), new PublicKey("4KLkUmYAEiL7gLjsyjB1dye9BvzKJk2cFebwyZJFfvFU").toBuffer(), Buffer.from("Protect the Sea")],
+      [Buffer.from("campaign"), new PublicKey(campaignCreator!).toBuffer(), Buffer.from("Plant a Billion trees")],
       program.programId
     )[0];
   }, [publicKey, program.programId]);
@@ -104,6 +105,7 @@ export function useExistingAccount() {
       return await program.account.campaignState.fetch(campaignPda);
     },
     enabled: !!campaignPda, 
+    refetchOnWindowFocus:false
   });
 
   return { campaignAccountQuery };

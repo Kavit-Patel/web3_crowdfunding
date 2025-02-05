@@ -16,7 +16,7 @@ export default function MintFeature() {
       <MintAirdrop wallet={wallet} mint = {campaignAccountQuery.data.mint}/>
       <MintList wallet={wallet} mint = {campaignAccountQuery.data.mint}/>
       </>
-      :<div className='flex h-96 justify-center items-center'>Campaign hasn't been created , Ask Admin to create !</div>
+      :<div className='flex h-96 justify-center items-center'>Campaign hasn&apos;t been created , Ask Admin to create !</div>
       }
     </div>
   ) : (

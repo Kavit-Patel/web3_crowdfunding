@@ -22,7 +22,7 @@ export function Donate({wallet,campaign}:{wallet:WalletContextState,campaign:ICa
             tokenList:query.data,
             campaignMintAccount:query.data?.find(acc=>acc.account.data.parsed.info.mint==campaign.mint)
     }
-  },[wallet,query.data])
+  },[wallet,query.data,campaign.mint])
   const availableTokenAmount:number = useMemo(()=>Number(campaignMintAccount?.account.data.parsed.info.tokenAmount.uiAmount),[campaignMintAccount])
   const handleCreateMint=async(e:FormEvent<HTMLFormElement>)=>{
 
@@ -95,8 +95,14 @@ export function Donate({wallet,campaign}:{wallet:WalletContextState,campaign:ICa
       <label className="block text-sm font-medium text-gray-300 flex justify-between">
         <span>Donation Amount</span>
         <span className='flex gap-5'>
-        <span className='pe-10'>Token Balance: <span className='text-green-600 font-bold'>{availableTokenAmount?availableTokenAmount.toFixed(2):0}</span></span>
-        {!availableTokenAmount && <Link href="mint" className='px-2 py-0.5 bg-green-800 rounded-lg text-xs transition-all hover:bg-green-950'>Request Airdrop</Link>}
+          {
+            query.isPending
+            ?<div className='text-xs loading loading-spinner'></div>
+            :<>
+              <span className='pe-2 md:pe-10'>Token Balance: <span className='text-green-600 font-bold'>{availableTokenAmount?availableTokenAmount.toFixed(2):0}</span></span>
+              {!availableTokenAmount && <Link href="mint" className='px-2 py-0.5 bg-green-800 rounded-lg text-xs transition-all hover:bg-green-950'>Request Airdrop</Link>}
+            </>
+          }
         </span>
       </label>
       <input

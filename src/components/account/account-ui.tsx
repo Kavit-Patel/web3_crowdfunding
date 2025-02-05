@@ -23,7 +23,7 @@ export function AccountBalance({ address }: { address: PublicKey }) {
 
   return (
     <div>
-      <h1 className="text-5xl font-bold cursor-pointer" onClick={() => query.refetch()}>
+      <h1 className="text-sm md:text-5xl font-bold cursor-pointer" onClick={() => query.refetch()}>
         {query.data ? <BalanceSol balance={query.data} /> : '...'} SOL
       </h1>
     </div>
@@ -107,7 +107,7 @@ export function AccountTokens({ address }: { address: PublicKey }) {
   }, [query.data, showAll])
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1">
       <div className="justify-between">
         <div className="flex justify-between">
           <h2 className="text-2xl font-bold">Token Accounts</h2>
@@ -136,9 +136,9 @@ export function AccountTokens({ address }: { address: PublicKey }) {
           {query.data.length === 0 ? (
             <div>No token accounts found.</div>
           ) : (
-            <div className="h-[140px]">
+            <div className="h-[120px] border-4 rounded-lg border-separate border-base-300">
               <PerfectScrollbar>
-            <table className="table border-4 rounded-lg border-separate border-base-300">
+            <table className="table">
               <thead>
                 <tr>
                   <th>Public Key</th>
@@ -202,7 +202,7 @@ export function AccountTransactions({ address }: { address: PublicKey }) {
   }, [query.data, showAll])
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1">
       <div className="flex justify-between">
         <h2 className="text-2xl font-bold">Transaction History</h2>
         <div className="space-x-2">
@@ -221,9 +221,9 @@ export function AccountTransactions({ address }: { address: PublicKey }) {
           {query.data.length === 0 ? (
             <div>No transactions found.</div>
           ) : (
-            <div className="h-[140px]">
+            <div className="h-[120px] border-4 rounded-lg border-separate border-base-300">
               <PerfectScrollbar>
-            <table className="table border-4 rounded-lg border-separate border-base-300">
+            <table className="table ">
               <thead>
                 <tr>
                   <th>Signature</th>

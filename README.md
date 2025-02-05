@@ -1,94 +1,81 @@
-# crowdfunding
+### Solana Web3 Crowdfunding Platform
 
-## Getting Started
+A decentralized crowdfunding platform built on the Solana blockchain. This project allows users to create campaigns, donate to them, and withdraw funds securely using smart contracts. The frontend is built with Next.js, and the smart contract is deployed on the Solana Devnet.
 
-### Prerequisites
+## Live Demo: [https://web3-crowdfunding.vercel.app/](https://web3-crowdfunding.vercel.app/)
 
-- Node v18.18.0 or higher
 
-- Rust v1.77.2 or higher
-- Anchor CLI 0.30.1 or higher
-- Solana CLI 1.18.17 or higher
+## Features
+Create Campaigns: Users can create crowdfunding campaigns with a title, start time, and deadline.
 
-### Installation
+Donate to Campaigns: Users can donate to active campaigns using Solana tokens.
 
-#### Clone the repo
+Withdraw Funds: Campaign owners can withdraw funds after the campaign deadline has passed.
 
-```shell
-git clone <repo-url>
-cd <repo-name>
-```
+Secure and Transparent: Built on Solana's blockchain for secure and transparent transactions.
 
-#### Install Dependencies
+## Technologies Used
+Blockchain: Solana
 
-```shell
-pnpm install
-```
+Smart Contract Framework: Anchor (Rust)
 
-#### Start the web app
+Frontend: Next.js 
 
-```
-pnpm dev
-```
+Deployment: Vercel (Frontend), Solana Devnet (Smart Contract)
 
-## Apps
+## Smart Contract Overview
+The smart contract is written in Rust using the Anchor framework. It is deployed on the Solana Devnet with 
+the program ID: FnBWfHQmw6o7igCF1NbScApEtJNesmqAPThKWT5RmbnS
 
-### anchor
+### Getting Started
+Prerequisites
+    Node.js (v16 or higher)
+    Solana CLI
+    Anchor CLI
+    Yarn or npm
 
-This is a Solana program written in Rust using the Anchor framework.
+## Installation
+Clone the repository:
+    git clone https://github.com/Kavit-Patel/web3_crowdfunding
+    cd web3_crowdfunding
+    Install dependencies:npm install
+Build and deploy the smart contract:    
+    anchor build
+    anchor deploy
+Run the frontend:
+    create .env file in root folder
+        add NEXT_PUBLIC_ADMIN_WALLET_SECRET - wallet who creates campaign 
+    npm run dev
+    Open the application in your browser:http://localhost:3000
 
-#### Commands
+Deployment
+Frontend: Deployed on Vercel at https://web3-crowdfunding.vercel.app/.
 
-You can use any normal anchor commands. Either move to the `anchor` directory and run the `anchor` command or prefix the command with `pnpm`, eg: `pnpm anchor`.
+Smart Contract: Deployed on Solana Devnet with program ID:
+FnBWfHQmw6o7igCF1NbScApEtJNesmqAPThKWT5RmbnS.
 
-#### Sync the program id:
+Contributing
+Contributions are welcome! If you'd like to contribute, please follow these steps:
 
-Running this command will create a new keypair in the `anchor/target/deploy` directory and save the address to the Anchor config file and update the `declare_id!` macro in the `./src/lib.rs` file of the program.
+Fork the repository.
 
-You will manually need to update the constant in `anchor/lib/counter-exports.ts` to match the new program id.
+Create a new branch for your feature or bugfix.
 
-```shell
-pnpm anchor keys sync
-```
+Commit your changes.
 
-#### Build the program:
+Submit a pull request.
 
-```shell
-pnpm anchor-build
-```
+Please ensure your code follows the project's coding standards and includes appropriate tests.
 
-#### Start the test validator with the program deployed:
+License
+This project is licensed under the MIT License. See the LICENSE file for details.
 
-```shell
-pnpm anchor-localnet
-```
 
-#### Run the tests
+Contact
+For questions or feedback, feel free to reach out:
 
-```shell
-pnpm anchor-test
-```
+Email: kvpatel.er@gmail.com
 
-#### Deploy to Devnet
+GitHub: [https://github.com/Kavit-Patel](https://github.com/Kavit-Patel)
 
-```shell
-pnpm anchor deploy --provider.cluster devnet
-```
-
-### web
-
-This is a React app that uses the Anchor generated client to interact with the Solana program.
-
-#### Commands
-
-Start the web app
-
-```shell
-pnpm dev
-```
-
-Build the web app
-
-```shell
-pnpm build
-```
+Thank you for checking out the Solana Web3 Crowdfunding Platform! 

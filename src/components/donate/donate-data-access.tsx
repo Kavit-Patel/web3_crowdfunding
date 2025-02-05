@@ -9,11 +9,14 @@ import { useMemo } from "react";
 import { getCrowdfundingProgram, getCrowdfundingProgramId } from "@project/anchor";
 import { ICampaign } from "../crowdfunding/types";
 import { BN } from "bn.js";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 export function useDonation(){
   const {cluster}=useCluster();
   const provider = useAnchorProvider();
   const transactionToast = useTransactionToast();
+  const router = useRouter()
 
   const programId = useMemo(()=>getCrowdfundingProgramId(cluster.network as Cluster),[cluster]);
   const program = useMemo(()=>getCrowdfundingProgram(provider,programId),[provider,programId]);
@@ -52,7 +55,9 @@ export function useDonation(){
       return tx
     },
     onSuccess:(signature)=>{
-      transactionToast(signature)
+      transactionToast(signature);
+      toast.success("Donation Successfull !");
+      router.push('/crowdfunding')
     }
   })
   return{

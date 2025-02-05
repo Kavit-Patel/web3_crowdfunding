@@ -9,3 +9,6 @@ export function formatDate(date: Date): string {
       v = n % 100;
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
   }
+
+export const unixTimeStarmp = (date: Date) =>
+    Math.floor(new Date(date).getTime() / 1000);
